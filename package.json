@@ -1,0 +1,26 @@
+{
+  "name": "chat-app-v2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/i-rebel-aj/Chat-app-v2.git"
+  },
+  "author": "Akshay Jain and Deepak Sharma",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/i-rebel-aj/Chat-app-v2/issues"
+  },
+  "homepage": "https://github.com/i-rebel-aj/Chat-app-v2#readme",
+  "dependencies": {
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "http": "^0.0.1-security",
+    "mongoose": "^5.12.3",
+    "socket.io": "^4.0.1"
+  }
+}
