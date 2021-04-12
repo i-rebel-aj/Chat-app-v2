@@ -1,0 +1,82 @@
+<%- include("../partials/header")%>
+<head>
+    <link rel="stylesheet" type="text/css" href="/public/css/personalchat.css">
+</head>
+
+<div class="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h3>Camp B34st Chat App</h3>
+        </div>
+        <ul class="list-unstyled components">
+            <p>You are logged in as:<strong><%=currentUser.name%></strong></p>
+            <h5>Chat With the following:-</h5>
+            <%Users.forEach((User)=>{%>
+            <li>
+                <a href="/chat/<%=User._id%>"><%=User.name%>  
+                <% if(User.Type==='Admin'){%>
+                    <span class="badge badge-danger">Admin</span>
+                <%}else if(User.Type==='Faculty'){%>
+                    <span class="badge badge-secondary">Faculty</span>
+                <%}else if(User.Type==='Student'){%>
+                    <span class="badge badge-success">Student</span>
+                    <%}%> 
+                </a>
+            </li>
+            <%});%>
+        </ul>
+    </nav>
+    <div id="content">
+        <h3>You are Chatting with <%=chattingTo.name%></span></h3>
+        <div class="container">
+        <ul id="messages" class="chatlist">
+            <%history.forEach((msg)=>{%>
+                <%if(String(msg.authorID)===String(currentUser._id)){%>
+                    <li class="me chatitem"><%=msg.message%></li>
+                <%}else{%>
+                    <li class="him chatitem"><%=msg.message%></li>
+                <%}%>
+            <%})%>
+        </ul>
+        <form action="" method="" class="fixed-bottom w-100">
+            <input type="text" id="m" placeholder="your message" required>
+            <button class="btn-success btn-sm" id="submit">Send</button>
+        </form>
+        </div>
+    </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+  var LoggedInSocket = "<%=currentUser._id%>";
+  var chattingTo= "<%=chattingTo._id%>";
+  var getId= "<%=chattingTo._id%>";  
+  console.log("Id is "+getId);
+  var socket = io();
+  console.log(`Logged in socket ${LoggedInSocket} and chatting to ${chattingTo}`)
+  console.log(socket);
+  /*========================================
+  Saying to server, Hey! I am logged in  
+  ==========================================*/ 
+  socket.emit('come_online', LoggedInSocket);
+  $(function () {
+    $('form').submit(function(e){
+      e.preventDefault(); // prevents page reloading
+      socket.emit('chat_message', $('#m').val(), chattingTo, LoggedInSocket);
+      $('#m').val('');
+      return false;
+    });
+    socket.on('chat_message', function(msg, from){
+        //So that message ffrom other user are not displayed on chatscreen.
+        if(from===chattingTo){
+            //var message=msg +" sent by "+from;
+            $('#messages').append($('<li class="him chatitem">').text(msg));
+        }else if(from===LoggedInSocket){
+            $('#messages').append($('<li class="me chatitem">').text(msg));
+        }
+    });
+    });
+</script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>

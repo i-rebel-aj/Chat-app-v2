@@ -1,71 +1,21 @@
 const express=require("express");
 const router=express.Router();
-const Users=require("../models/user");
-const Message=require("../models/message");
-router.get("/", (req,res)=>{
+const {User}=require("../models/User");
+const {Chat}=require("../models/Chat");
+const { isLoggedIn } = require("../middleware/auth");
+router.get("/",[isLoggedIn], (req,res)=>{
     res.render("messenger/rules");
 });
-router.get("/:id",function(req,res){
-    //console.log(req.params.id);
-    Users.find({}, function(err, allUsers){
-        if(err){
-            console.log(err);
-        }else{
-            //receiver
-            Users.findById(req.params.id,function(err, foundUser){
-                if(err){
-                    console.log(err)
-                }else{
-                    Message.find({"author.Username": req.session.user.Username, "receiver.Username": foundUser.Username, type:"personal"}, function(err, found_author_msg){
-                        if(err){
-                            console.log("No messages were found");
-                            console.log(err);
-                        }else{
-                            Message.find({"author.Username": foundUser.Username, "receiver.Username": req.session.user.Username, type:"personal"}, function(err, found_receiver_texts){
-                                if(err){
-                                    console.log(err)
-                                }else{
-                                   var history=found_author_msg.concat(found_receiver_texts);
-                                   //Sorting based on TimeStamp
-                                   history.sort((a,b) => (a.createdAt > b.createdAt) ? 1 : ((b.createdAt > a.createdAt) ? -1 : 0));
-                                   res.render("messenger/personalchat",{Users: allUsers, chattingTo:foundUser, history: history}); 
-                                }
-                            });
-                        }
-                    });
-                    
-                }
-            });
-        }
-    });
-});
-router.get("/room/:id", (req,res)=>{
-    Users.findById(req.params.id, (err, foundUser)=>{
-        Message.find({"receiver.Username": null, type:"room"}, function(err, broadcastMessages){
-            if(err){
-                console.log("No messages were found");
-                console.log(err);
-            }else{
-                Message.find({"receiver.Username": { $ne: null }, "author.Username": foundUser.Username,type:"room"}, function(err, sentPm){
-                    if(err){
-                        console.log(err)
-                    }else{
-                            var history=broadcastMessages.concat(sentPm);
-                            Message.find({"receiver.Username": foundUser.Username,type:"room"},(err,receivedPm)=>{
-                            if(err){
-                                console.log(err);
-                            }else{
-                                var history1=history.concat(receivedPm);
-                                //Sorting based on TimeStamp
-                                history1.sort((a,b) => (a.createdAt > b.createdAt) ? 1 : ((b.createdAt > a.createdAt) ? -1 : 0));
-                                res.render("messenger/roomchat",{history: history1}); 
-                            }
-                       }); 
-                    }
-                });
-            }
-        });
-    });
-    
+router.get("/:id",[isLoggedIn],async (req,res)=>{
+    try{
+        const receiver=await User.findById(req.params.id)
+        const allUsers=await User.find({instituteID: receiver.instituteID})
+        const allChatMessages=await Chat.find({$or:[{authorID: req.session.user._id, receiverID: receiver._id}, {authorID: receiver._id, receiverID: req.session.user._id}]}).sort({createdAt: 1})
+        //console.log(allChatMessages)
+        res.render('messenger/personalchat',{Users: allUsers, chattingTo:receiver, history: allChatMessages})
+    }catch(err){
+        console.log(err)
+        res.send(`Something Went Wrong ${err.message}`)
+    }
 });
 module.exports=router;
